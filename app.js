@@ -1,9 +1,11 @@
 const { spawn } = require('child_process');
 const speech = require('@google-cloud/speech');
 const fs = require('fs');
+const { Client } = require('@notionhq/client'); 
 const { promises: fsPromises } = require('fs');
-
-const axios = require('axios');
+const { get } = require('express/lib/response');
+console.log(process.env.NOTION_KEY);
+const notion = new Client({ auth: process.env["NOTION_KEY"] })
 
 const pythonExecutable = '/Library/Frameworks/Python.framework/Versions/3.11/bin/python3';
 
@@ -31,6 +33,86 @@ function generateTextDataFromYouTube(url) {
       }
     });
   });
+}
+
+
+
+
+
+async function getAllPages() {
+  try {
+    let continuePagination = true;
+    let startCursor = undefined;
+    
+    while (continuePagination) {
+      // Use the "search" endpoint to find all pages
+      const response = await notion.search({
+        query: "",
+        filter: {
+          value: "page",
+          property: "object"
+        },
+        page_size: 100,
+        start_cursor: startCursor,
+      });
+      
+      // Log each page's name and ID
+      response.results.forEach(page => {
+        if (page.object === "page") {
+          console.log(`Page Name: ${page.properties.title.title[0].plain_text}`);
+          console.log(`Page ID: ${page.id}`);
+        }
+      });
+
+      // Continue pagination if next cursor is present
+      if (response.next_cursor) {
+        startCursor = response.next_cursor;
+      } else {
+        continuePagination = false;
+      }
+    }
+  } catch (error) {
+    console.error("Error retrieving pages:", error);
+  }
+}
+
+
+
+async function addBlockToNotion(notion) {
+  (async () => {
+    const blockId = '6a75e7a827f844e2b6fc01ae776ae7e8';
+    const response = await notion.blocks.children.append({
+      block_id: blockId,
+      children: [
+        {
+          "heading_2": {
+            "rich_text": [
+              {
+                "text": {
+                  "content": "Lacinato kale in Tucson"
+                }
+              }
+            ]
+          }
+        },
+        {
+          "paragraph": {
+            "rich_text": [
+              {
+                "text": {
+                  "content": "Lacinato kale is a variety of kale with a long tradition in Italian cuisine, especially that of Tuscany. It is also known as Tuscan kale, Italian kale, dinosaur kale, kale, flat back kale, palm tree kale, or black Tuscan palm.",
+                  "link": {
+                    "url": "https://en.wikipedia.org/wiki/Lacinato_kale"
+                  }
+                }
+              }
+            ]
+          }
+        }
+      ],
+    });
+    console.log(response);
+  })();
 }
 
 async function convertAudioToText(audioFilePath) {
@@ -69,10 +151,12 @@ async function convertAudioToText(audioFilePath) {
 }
 
 const youtubeUrl = 'https://www.youtube.com/watch?v=Rt07rT5kNWU';
-generateTextDataFromYouTube(youtubeUrl)
-  .then(textData => {
-    console.log('Text Data:', textData);
-  })
-  .catch(error => {
-    console.error('Error:', error.message);
-  });
+getAllPages();
+addBlockToNotion(notion);
+// generateTextDataFromYouTube(youtubeUrl)
+//   .then(textData => {
+//     console.log('Text Data:', textData);
+//   })
+//   .catch(error => {
+//     console.error('Error:', error.message);
+//   });
