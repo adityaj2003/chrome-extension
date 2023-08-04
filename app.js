@@ -1,10 +1,10 @@
 const { spawn } = require('child_process');
 const speech = require('@google-cloud/speech');
 const fs = require('fs');
+const path = require('path');
 const { Client } = require('@notionhq/client'); 
 const { promises: fsPromises } = require('fs');
 const { get } = require('express/lib/response');
-console.log(process.env.NOTION_KEY);
 const notion = new Client({ auth: process.env["NOTION_KEY"] })
 
 const pythonExecutable = '/Library/Frameworks/Python.framework/Versions/3.11/bin/python3';
@@ -78,8 +78,9 @@ async function getAllPages() {
 
 
 
-async function addBlockToNotion(notion) {
+async function addBlockToNotion(notion, text, title) {
   (async () => {
+    console.log('Adding block to Notion');
     const blockId = '6a75e7a827f844e2b6fc01ae776ae7e8';
     const response = await notion.blocks.children.append({
       block_id: blockId,
@@ -89,7 +90,7 @@ async function addBlockToNotion(notion) {
             "rich_text": [
               {
                 "text": {
-                  "content": "Lacinato kale in Tucson"
+                  "content": title
                 }
               }
             ]
@@ -97,13 +98,10 @@ async function addBlockToNotion(notion) {
         },
         {
           "paragraph": {
-            "rich_text": [
+            "rich_text": [  
               {
                 "text": {
-                  "content": "Lacinato kale is a variety of kale with a long tradition in Italian cuisine, especially that of Tuscany. It is also known as Tuscan kale, Italian kale, dinosaur kale, kale, flat back kale, palm tree kale, or black Tuscan palm.",
-                  "link": {
-                    "url": "https://en.wikipedia.org/wiki/Lacinato_kale"
-                  }
+                  "content": text,
                 }
               }
             ]
@@ -150,13 +148,42 @@ async function convertAudioToText(audioFilePath) {
   });
 }
 
-const youtubeUrl = 'https://www.youtube.com/watch?v=Rt07rT5kNWU';
-getAllPages();
-addBlockToNotion(notion);
-// generateTextDataFromYouTube(youtubeUrl)
-//   .then(textData => {
-//     console.log('Text Data:', textData);
-//   })
-//   .catch(error => {
-//     console.error('Error:', error.message);
-//   });
+
+let summaryText = '';
+let title = '';
+function generateSummary(url) {
+  return new Promise((resolve, reject) => {
+    const pythonProcess = spawn(pythonExecutable, [path.join(__dirname, 'script.py'), url]);
+
+    let dataText = '';
+    let error = '';
+
+    pythonProcess.stdout.on('data', (data) => {
+        dataText += data.toString();
+    });
+
+    pythonProcess.stderr.on('data', (data) => {
+        error += data.toString();
+    });
+
+    pythonProcess.on('close', (code) => {
+        if (code !== 0) {
+            return reject(new Error(`Python script ended with code ${code}: ${error}`));
+        }
+
+        // Split the received data into title and summaryText
+        const splitIndex = dataText.indexOf('\n');
+        title = dataText.substring(0, splitIndex);
+        summaryText = dataText.substring(splitIndex + 1);
+
+        // You can modify this part to send the title and summaryText as needed
+        resolve({ title, summaryText });
+    });
+  });
+}
+
+
+const youtubeUrl = 'https://www.youtube.com/watch?v=NzH02iWDkKw&t=20s';
+generateSummary(youtubeUrl)
+    .then(({ title, summaryText }) => addBlockToNotion(notion, summaryText, title))
+    .catch(error => console.error(`Error during summary generation: ${error.message}`));
