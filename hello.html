@@ -1,26 +1,59 @@
 <!DOCTYPE html>
-<html>
-
+<html lang="en">
 <head>
-  <title>YouTube Text Generator</title>
-  <style>
-    body {
-      font-family: Arial, sans-serif;
-    }
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>YouTube transcription to Notion</title>
+    <style>
+        body {
+            background-color: black;
+            color: white;
+        }
 
-    button {
-      padding: 10px 20px;
-      font-size: 16px;
-      cursor: pointer;
-    }
-  </style>
+        .container {
+            text-align: center;
+            padding: 20px;
+        }
+
+        .title {
+            font-size: 24px;
+            font-weight: bold;
+            margin-bottom: 20px;
+        }
+
+        .logo {
+            width: 50px;
+            height: 50px;
+        }
+
+        .export-button {
+            background-color: #FF0000;
+            border: none;
+            color: white;
+            padding: 15px 32px;
+            text-align: center;
+            text-decoration: none;
+            display: inline-block;
+            font-size: 16px;
+            margin: 4px 2px;
+            cursor: pointer;
+            border-radius: 12px;
+            transition: background 0.3s ease;
+        }
+
+        .export-button:hover {
+            background-color: #e50000;
+        }
+    </style>
 </head>
-
 <body>
-  <h1>YouTube Text Generator</h1>
-  <button id="generateButton">Export Summary to Notion. </button>
+    <div class="container">
+        <img class="logo" src="youtube-logo.png" alt="YouTube Logo">
+        <div class="title">YouTube transcription to Notion</div>
+        <button class="export-button" id="exportButton">Export Transcript</button>
+    </div>
 
-  <script src="popup.js"></script>
+    <script src="popup.js"></script>
+
 </body>
-
 </html>

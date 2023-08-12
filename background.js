@@ -1,21 +1,19 @@
-chrome.webNavigation.onHistoryStateUpdated.addListener(getCurrentTab);
-
-async function getCurrentTab() {
-    console.log('Getting current tab');
-    let queryOptions = { active: true, lastFocusedWindow: true };
-    // `tab` will either be a `tabs.Tab` instance or `undefined`.
-    let [tab] = await chrome.tabs.query(queryOptions);
-    console.log("current tab: ", tab);
-    if (tab && isYoutubeUrl(tab.url)) {
-        console.log('Youtube URL detected');
-        chrome.action.setPopup({ popup: 'hello.html', tabId: tab.id });
-       
+chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
+    if (request.action === 'exportTranscript') {
+      // Get the URL from the message
+      const url = request.url;
+  
+      // Send the URL to your backend server
+      fetch('http://localhost:3000/export', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ url: url }),
+      })
+        .then((response) => response.json())
+        .then((data) => {
+          // Handle the response from the server here, if needed
+        })
+        .catch((error) => console.error('Error:', error));
     }
-  }
-
-
-  function isYoutubeUrl(url) {
-    const youtubeUrlPattern = /youtube\.com\/watch/i;
-    return youtubeUrlPattern.test(url);
-  }
+  });
   

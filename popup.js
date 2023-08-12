@@ -1,30 +1,12 @@
-document.addEventListener('DOMContentLoaded', () => {
-    // Find the Generate button by its ID
-    const generateButton = document.getElementById('generateButton');
-  
-    // Add a click event listener to the button
-    generateButton.addEventListener('click', () => {
-      // Get the current active tab URL
-      chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
-        const currentTab = tabs[0];
-        const youtubeUrl = currentTab.url;
-  
-        // Send the YouTube URL to the backend
-        fetch('http://localhost:3000/get-text-from-youtube', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json'
-          },
-          body: JSON.stringify({ url: youtubeUrl })
-        })
-          .then((response) => response.json())
-          .then((data) => {
-            // Handle the response from the backend (data.textData)
-            console.log(data.textData);
-          })
-          .catch((error) => {
-            console.error('Error:', error);
-          });
-      });
+function exportTranscript() {
+    console.log("exportTranscript");
+    chrome.tabs.query({ active: true, lastFocusedWindow: true }, (tabs) => {
+      let url = tabs[0].url;
+      chrome.runtime.sendMessage({ action: 'exportTranscript', url: url });
     });
+  }
+
+document.addEventListener('DOMContentLoaded', () => {
+    const exportButton = document.getElementById('exportButton');
+    exportButton.addEventListener('click', exportTranscript);
   });

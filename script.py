@@ -15,6 +15,7 @@ def download_audio(url):
     output_mp3_path = os.path.join(os.getcwd(), 'audio.mp3')
     audio_clip.write_audiofile(output_mp3_path, logger=None)
     audio_clip.close()
+    os.remove(get_first_file_name_in_directory(output_path))
 
     return output_mp3_path
 
@@ -53,7 +54,7 @@ def generate_corrected_transcript(temperature, system_prompt):
     return response['choices'][0]['message']['content']
 
 if __name__ == "__main__":
-    
+    openai.api_key = "Insert your own key"
     if len(sys.argv) < 2:
         print("Please provide a YouTube URL as a command line argument.")
         sys.exit()

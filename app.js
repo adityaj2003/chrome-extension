@@ -2,12 +2,17 @@ const { spawn } = require('child_process');
 const speech = require('@google-cloud/speech');
 const fs = require('fs');
 const path = require('path');
+const express = require('express');
+const bodyParser = require('body-parser');
 const { Client } = require('@notionhq/client'); 
 const { promises: fsPromises } = require('fs');
 const { get } = require('express/lib/response');
 const notion = new Client({ auth: process.env["NOTION_KEY"] })
 
 const pythonExecutable = '/Library/Frameworks/Python.framework/Versions/3.11/bin/python3';
+
+const app = express();
+app.use(bodyParser.json());
 
 function generateTextDataFromYouTube(url) {
   return new Promise((resolve, reject) => {
@@ -45,7 +50,6 @@ async function getAllPages() {
     let startCursor = undefined;
     
     while (continuePagination) {
-      // Use the "search" endpoint to find all pages
       const response = await notion.search({
         query: "",
         filter: {
@@ -56,7 +60,6 @@ async function getAllPages() {
         start_cursor: startCursor,
       });
       
-      // Log each page's name and ID
       response.results.forEach(page => {
         if (page.object === "page") {
           console.log(`Page Name: ${page.properties.title.title[0].plain_text}`);
@@ -64,7 +67,6 @@ async function getAllPages() {
         }
       });
 
-      // Continue pagination if next cursor is present
       if (response.next_cursor) {
         startCursor = response.next_cursor;
       } else {
@@ -117,17 +119,15 @@ async function convertAudioToText(audioFilePath) {
   return new Promise((resolve, reject) => {
     try {
       console.log('Converting audio to text');
-      // Initialize the SpeechClient
       const client = new speech.SpeechClient();
 
-      // Create a recognize stream
       const recognizeStream = client.streamingRecognize({
         config: {
-          encoding: 'MP3', // Use MP3 encoding
+          encoding: 'MP3',
           sampleRateHertz: 44100,
           languageCode: 'en-US',
         },
-        interimResults: true, // Get interim results during streaming
+        interimResults: true,
       });
 
       recognizeStream.on('data', (data) => {
@@ -171,19 +171,26 @@ function generateSummary(url) {
             return reject(new Error(`Python script ended with code ${code}: ${error}`));
         }
 
-        // Split the received data into title and summaryText
         const splitIndex = dataText.indexOf('\n');
         title = dataText.substring(0, splitIndex);
         summaryText = dataText.substring(splitIndex + 1);
-
-        // You can modify this part to send the title and summaryText as needed
         resolve({ title, summaryText });
     });
   });
 }
 
-
-const youtubeUrl = 'https://www.youtube.com/watch?v=NzH02iWDkKw&t=20s';
-generateSummary(youtubeUrl)
+app.post('/export', (req, res) => {
+  const url = req.body.url;
+  console.log(url);
+  generateSummary(url)
     .then(({ title, summaryText }) => addBlockToNotion(notion, summaryText, title))
     .catch(error => console.error(`Error during summary generation: ${error.message}`));
+
+  res.json({ message: 'Transcript exported successfully!' });
+});
+
+
+const port = 3000;
+app.listen(port, () => {
+  console.log(`Server running on http://localhost:${port}`);
+});
