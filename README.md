@@ -2,7 +2,7 @@
 This project aims to export the summary of a youtube video you are currently watching into your notion notebook. It aims to use OpenAI API
 to get summary of the youtube video.
 
-#Setup
+<h2>Setup</h2>
 You would need to generate your own api key for access to the OpenAI API. It
 is fairly straightforward on the OpenAI website. Replace your API key in the
 script.py file.
@@ -14,7 +14,7 @@ alphanumeric text after the link of your page
 "https://www.notion.so/{THIS_IS_YOUR_PAGE_BLOCK_ID}". I have my Notion API key
 setup in my local environment as NOTION_KEY.
 
-#Running
+<h2>Running</h2>
 You can start the node app using "node app.js". Load the hello extension
 using chrome extension developer mode and pointing to the top folder of this
 project and chrome should do everything for you. Be sure to give it
